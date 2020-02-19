@@ -34,7 +34,7 @@ impl Handler<Msg2> for MyActor {
 
 pub fn test() -> (Duration, Duration) {
     async_std::task::block_on(async {
-        let mut addr = MyActor(0).start();
+        let mut addr = MyActor(0).start().await;
 
         let call_start = Instant::now();
         let mut sum = 0;
