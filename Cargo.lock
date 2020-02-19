@@ -1446,15 +1446,17 @@ dependencies = [
 
 [[package]]
 name = "xactor"
-version = "0.2.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "204a70ae6641fce78f5f6e36f45d2975d106ba24a56f5f92f096c98d832bfcc4"
+checksum = "b5aa589a95a3b67597575b1e0b2df82351bdc49e79b10b89eafe824c90fe718a"
 dependencies = [
  "anyhow",
  "async-std",
  "async-trait",
+ "fnv",
  "futures",
  "once_cell",
+ "xactor-derive",
 ]
 
 [[package]]
@@ -1466,4 +1468,15 @@ dependencies = [
  "async-std",
  "async-trait",
  "xactor",
+]
+
+[[package]]
+name = "xactor-derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1daf5b566bcbb48139b78126eacdc41ef5067888d656f680e922a661289ebf5e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
