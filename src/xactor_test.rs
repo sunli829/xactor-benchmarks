@@ -1,55 +1,132 @@
+use super::{Result as BenchResult, Spec};
 use std::time::{Duration, Instant};
 use xactor::*;
 
-struct Msg1(i64);
-
-impl Message for Msg1 {
-    type Result = i64;
+// The ring actor
+struct RingActor {
+    // Next actor in the ring - must allow None as the actor only knows
+    // about the next actor once it has been created.
+    next: Option<Addr<RingActor>>,
+    // The actor id (place in ring)
+    id: u32,
+    // Max number of actors we want
+    max: u32,
+    // Number of messages to pass
+    msgs: u32,
 }
 
-struct Msg2;
+#[message(result = "()")]
+#[derive(Clone)]
+struct Data(String);
 
-impl Message for Msg2 {
-    type Result = ();
+// The close ring message to set the first actor as next for the last actor
+#[message(result = "()")]
+struct CloseRing {
+    first: Addr<RingActor>,
 }
 
-struct MyActor(i64);
-
-impl Actor for MyActor {}
-
+// Actor implementation
 #[async_trait::async_trait]
-impl Handler<Msg1> for MyActor {
-    async fn handle(&mut self, _ctx: &Context<Self>, msg: Msg1) -> i64 {
-        self.0 += msg.0;
-        self.0
+impl Actor for RingActor {
+    async fn started(&mut self, _ctx: &Context<Self>) {
+        // As long as the actor id is smaller then the max
+        // number of actors create a new actor with the next id
+        if self.id < self.max {
+            self.next = Some(
+                RingActor {
+                    next: None,
+                    id: self.id + 1,
+                    max: self.max,
+                    msgs: self.msgs,
+                }
+                .start()
+                .await,
+            );
+        };
+    }
+}
+
+// Implementation of the handler for Data message
+#[async_trait::async_trait]
+impl Handler<Data> for RingActor {
+    async fn handle(&mut self, ctx: &Context<Self>, msg: Data) -> () {
+        match self.next {
+            Some(ref mut next) => {
+                // If we do we check if we are the first process
+                if self.id == 0 {
+                    // If so we know we can end our system if we have send our
+                    // messages
+                    if self.msgs == 0 {
+                        ctx.stop(None);
+                    } else {
+                        // Otherwise we decrement the message count and send a new
+                        // `Data` message to the next actor in the ring.
+                        self.msgs -= 1;
+                        next.send(msg.clone());
+                    }
+                } else {
+                    // If we are not the first process we just keep passing on
+                    // `Data` messages
+                    next.send(msg.clone());
+                }
+            }
+            // so if it does we panic!
+            None => panic!(
+                "[{}] Next was null! This is not a ring it's a string :(",
+                self.id
+            ),
+        };
     }
 }
 
 #[async_trait::async_trait]
-impl Handler<Msg2> for MyActor {
-    async fn handle(&mut self, _ctx: &Context<Self>, _msg: Msg2) {
-        self.0 += 1;
+impl Handler<CloseRing> for RingActor {
+    async fn handle(&mut self, _ctx: &Context<Self>, msg: CloseRing) -> () {
+        match self.next {
+            // If we have a next we pass this message on to the next actor
+            Some(ref mut next) => {
+                next.send(msg);
+                ()
+            }
+            // If not weŕe the last actor and set the first node as our next node
+            None => {
+                self.next = Some(msg.first);
+                ()
+            }
+        };
     }
 }
 
-pub fn test() -> (Duration, Duration) {
-    async_std::task::block_on(async {
-        let mut addr = MyActor(0).start().await;
+pub async fn run(spec: &Spec) -> BenchResult {
+    // Pre-generate the payload so weŕe not measuring string
+    // creation.
+    let data = (0..spec.size).map(|_| "x").collect::<String>();
 
-        let call_start = Instant::now();
-        let mut sum = 0;
-        for i in 0..100000 {
-            sum += i;
-            assert_eq!(sum, addr.call(Msg1(i)).await.unwrap());
-        }
-        let call_elapsed = call_start.elapsed();
+    // Create our first actor
+    let mut addr: Addr<_> = RingActor {
+        next: None,
+        id: 0,
+        max: spec.procs,
+        msgs: spec.messages,
+    }
+    .start()
+    .await;
 
-        let send_start = Instant::now();
-        for _ in 0..100000 {
-            addr.send(Msg2).unwrap();
-        }
-        let send_elapsed = send_start.elapsed();
+    // Since the first actor will create the second and so one at this
+    // point our ring is nearly complete it just needs to be closed.
+    addr.send(CloseRing {
+        first: addr.clone(),
+    });
 
-        (call_elapsed, send_elapsed)
-    })
+    // Next we put Data messages on the ring limited by the number
+    // of parallel messages we want.
+    for _ in 0..spec.parallel {
+        addr.send(Data(data.clone()));
+    }
+
+    // The ring will run until our first actor decides it's time to shut down.
+    BenchResult {
+        name: String::from("rust_xactor"),
+        spec: spec.clone(),
+    }
 }
