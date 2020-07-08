@@ -1083,9 +1083,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.3.1"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c601810575c99596d4afc46f78a678c80105117c379eb3650cf99b8a21ce5b"
+checksum = "0b631f7e854af39a1739f401cf34a8a013dfe09eac4fa4dba91e9768bd28168d"
 
 [[package]]
 name = "oorandom"
@@ -1898,9 +1898,9 @@ dependencies = [
 
 [[package]]
 name = "xactor"
-version = "0.6.4"
+version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c94b9377b4d9b729a0f8eac09ad7a9acad0072bee52f30e6c89527288f1b256"
+checksum = "72f9f1821fb24de6405b1f068e17db4e1f2c4a17e745cd8dda9fea49a4741ebf"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1908,6 +1908,7 @@ dependencies = [
  "fnv",
  "futures",
  "once_cell",
+ "slab",
  "xactor-derive",
 ]
 
@@ -1925,9 +1926,9 @@ dependencies = [
 
 [[package]]
 name = "xactor-derive"
-version = "0.2.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2af9139382997e5fc5de5254199cf76431446697f51f1ab3d566f68332d085ae"
+checksum = "ce65a6e78fedf06f36b8e7b3154175226fad605971f535062339c05f5caecbed"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -16,7 +16,7 @@ path = "src/benches.rs"
 [dependencies]
 actix = "0.9.0"
 async-trait = "0.1.24"
-xactor = "0.6"
+xactor = "0.7.6"
 
 [dev-dependencies]
 criterion = "0.3.2"

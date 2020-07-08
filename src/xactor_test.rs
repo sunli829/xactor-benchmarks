@@ -28,7 +28,7 @@ struct CloseRing {
 // Actor implementation
 #[async_trait::async_trait]
 impl Actor for RingActor {
-    async fn started(&mut self, _ctx: &Context<Self>) {
+    async fn started(&mut self, _ctx: &mut Context<Self>) -> Result<()> {
         // As long as the actor id is smaller then the max
         // number of actors create a new actor with the next id
         if self.id < self.max {
@@ -40,9 +40,12 @@ impl Actor for RingActor {
                     msgs: self.msgs,
                 }
                 .start()
-                .await,
+                .await
+                .unwrap(),
             );
         };
+
+        Ok(())
     }
 }
 
@@ -110,7 +113,8 @@ pub async fn run(spec: &Spec) -> BenchResult {
         msgs: spec.messages,
     }
     .start()
-    .await;
+    .await
+    .unwrap();
 
     // Since the first actor will create the second and so one at this
     // point our ring is nearly complete it just needs to be closed.
