@@ -14,11 +14,11 @@ harness = false
 path = "src/benches.rs"
 
 [dependencies]
-actix = "0.9.0"
-async-trait = "0.1.24"
-xactor = "0.7.6"
+actix = "0.10.0"
+async-trait = "0.1.42"
+xactor = "0.7.11"
 
 [dev-dependencies]
-criterion = "0.3.2"
+criterion = "0.3.4"
 num_cpus = "1.13.0"
-smol = "0.1.10"
+smol = "1.2.5"
