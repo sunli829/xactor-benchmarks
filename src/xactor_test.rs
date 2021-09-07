@@ -1,5 +1,4 @@
 use super::{Result as BenchResult, Spec};
-use std::time::{Duration, Instant};
 use xactor::*;
 
 // The ring actor
