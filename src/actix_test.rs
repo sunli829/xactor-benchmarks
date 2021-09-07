@@ -1,6 +1,5 @@
 use super::{Result as BenchResult, Spec};
 use actix::{prelude::*, *};
-use std::time::{Duration, Instant};
 
 // The ring actor
 struct RingActor {
@@ -108,27 +107,30 @@ pub fn run(spec: &Spec) -> BenchResult {
     let data = (0..spec.size).map(|_| "x").collect::<String>();
 
     // Start a new System.
-    let system = System::new("bench");
-    // Create our first actor
-    let addr: Addr<_> = RingActor {
-        next: None,
-        id: 0,
-        max: spec.procs,
-        msgs: spec.messages,
-    }
-    .start();
+    let system = System::new();
 
-    // Since the first actor will create the second and so one at this
-    // point our ring is nearly complete it just needs to be closed.
-    addr.do_send(CloseRing {
-        first: addr.clone(),
+    system.block_on(async {
+        // Create our first actor
+        let addr: Addr<_> = RingActor {
+            next: None,
+            id: 0,
+            max: spec.procs,
+            msgs: spec.messages,
+        }
+        .start();
+    
+        // Since the first actor will create the second and so one at this
+        // point our ring is nearly complete it just needs to be closed.
+        addr.do_send(CloseRing {
+            first: addr.clone(),
+        });
+    
+        // Next we put Data messages on the ring limited by the number
+        // of parallel messages we want.
+        for _ in 0..spec.parallel {
+            addr.do_send(Data(data.clone()));
+        }
     });
-
-    // Next we put Data messages on the ring limited by the number
-    // of parallel messages we want.
-    for _ in 0..spec.parallel {
-        addr.do_send(Data(data.clone()));
-    }
 
     // The ring will run until our first actor decides it's time to shut down.
     system.run();

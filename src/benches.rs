@@ -1,6 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use std::{fmt, time::Duration};
-use xactor_benchmarks::{actix_test, xactor_test, Result as BenchResult, Spec};
+use xactor_benchmarks::{actix_test, xactor_test, Spec};
 
 criterion_group!(benches, bench_actix, bench_xactor);
 criterion_main!(benches);
@@ -24,7 +23,7 @@ fn bench_xactor(c: &mut Criterion) {
     for spec in tests.into_iter() {
         group.bench_with_input(BenchmarkId::from_parameter(&spec), &spec, |b, spec| {
             // See https://github.com/async-rs/async-std/issues/770#issuecomment-633011171
-            b.iter(|| smol::run(async { xactor_test::run(black_box(spec)).await }))
+            b.iter(|| tokio_test::block_on(async { xactor_test::run(black_box(spec)).await }))
         });
     }
     group.finish();
