@@ -24,7 +24,7 @@ fn bench_xactor(c: &mut Criterion) {
     for spec in tests.into_iter() {
         group.bench_with_input(BenchmarkId::from_parameter(&spec), &spec, |b, spec| {
             // See https://github.com/async-rs/async-std/issues/770#issuecomment-633011171
-            b.iter(|| smol::run(async { xactor_test::run(black_box(spec)).await }))
+            b.iter(|| smol::block_on(async { xactor_test::run(black_box(spec)).await }))
         });
     }
     group.finish();

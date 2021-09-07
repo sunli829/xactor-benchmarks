@@ -52,7 +52,7 @@ impl Actor for RingActor {
 // Implementation of the handler for Data message
 #[async_trait::async_trait]
 impl Handler<Data> for RingActor {
-    async fn handle(&mut self, ctx: &Context<Self>, msg: Data) -> () {
+    async fn handle(&mut self, ctx: &mut Context<Self>, msg: Data) -> () {
         match self.next {
             Some(ref mut next) => {
                 // If we do we check if we are the first process
@@ -84,7 +84,7 @@ impl Handler<Data> for RingActor {
 
 #[async_trait::async_trait]
 impl Handler<CloseRing> for RingActor {
-    async fn handle(&mut self, _ctx: &Context<Self>, msg: CloseRing) -> () {
+    async fn handle(&mut self, _ctx: &mut Context<Self>, msg: CloseRing) -> () {
         match self.next {
             // If we have a next we pass this message on to the next actor
             Some(ref mut next) => {
